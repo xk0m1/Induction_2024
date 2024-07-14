@@ -11,20 +11,22 @@ import java.util.List;
 
 public class MyAccessibilityService extends AccessibilityService {
 
-    AccessibilityNodeInfo nodeInfo = getRootInActiveWindow();
-
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
+
         int eventType = event.getEventType();
         List<CharSequence> s = event.getText();
+
+        try{
+            handleNodeInfo(getRootInActiveWindow(),0);
+        }catch (Exception e){
+            Log.d("nodeinfo", "Error: " + e.getMessage());
+        }
 
         switch (eventType) {
             case AccessibilityEvent.TYPE_VIEW_CLICKED:
                 logEvent(s, "single click");
                 Log.d("data", "App name: " + event.getContentDescription());
-                break;
-            case AccessibilityEvent.TYPE_VIEW_CONTEXT_CLICKED:
-                logEvent(s, "context click");
                 break;
             case AccessibilityEvent.TYPE_VIEW_FOCUSED:
                 logEvent(s, "view focused");
@@ -36,21 +38,40 @@ public class MyAccessibilityService extends AccessibilityService {
                 logEvent(s, "view scrolled");
                 logScrollEvent(event);
                 break;
-            case AccessibilityEvent.TYPE_VIEW_SELECTED:
-                logEvent(s, "view selected");
-                break;
             case AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED:
                 logEvent(s, "text changed");
                 break;
             case AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED:
                 handleNotificationStateChanged(event);
                 break;
-            case AccessibilityEvent.TYPE_WINDOWS_CHANGED:
-                dummy();
-                break;
             default:
                 Log.d("data", "Unhandled event type: " + eventType);
                 break;
+        }
+    }
+
+    public void handleNodeInfo(AccessibilityNodeInfo n,int i) {
+        if (n == null) {
+            Log.d("nodeinfo", "Node is null");
+            return;
+        }
+
+        StringBuilder sb = new StringBuilder();
+        for (int j = 0; j < i; j++) {
+            sb.append("  ");
+        }
+
+        sb.append(n.getClassName());
+        sb.append(" ");
+        sb.append(n.getText());
+        sb.append(" ");
+        sb.append(n.getContentDescription());
+        sb.append(" ");
+
+        Log.d("nodeinfo", sb.toString());
+
+        for (int j = 0; j < n.getChildCount(); j++) {
+            handleNodeInfo(n.getChild(j), i + 1);
         }
     }
 
