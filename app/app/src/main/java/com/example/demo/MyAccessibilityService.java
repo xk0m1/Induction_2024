@@ -6,10 +6,13 @@ import android.os.Parcelable;
 import android.util.Log;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
-
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class MyAccessibilityService extends AccessibilityService {
+
+    private final Set<String> loggedNodes = new HashSet<>();
 
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
@@ -17,9 +20,9 @@ public class MyAccessibilityService extends AccessibilityService {
         int eventType = event.getEventType();
         List<CharSequence> s = event.getText();
 
-        try{
-            handleNodeInfo(getRootInActiveWindow(),0);
-        }catch (Exception e){
+        try {
+            handleNodeInfo(getRootInActiveWindow(), 0);
+        } catch (Exception e) {
             Log.d("nodeinfo", "Error: " + e.getMessage());
         }
 
@@ -50,29 +53,34 @@ public class MyAccessibilityService extends AccessibilityService {
         }
     }
 
-    public void handleNodeInfo(AccessibilityNodeInfo n,int i) {
-        if (n == null) {
-            Log.d("nodeinfo", "Node is null");
+    public void handleNodeInfo(AccessibilityNodeInfo node, int depth) {
+        if (node == null) {
             return;
         }
 
-        StringBuilder sb = new StringBuilder();
-        for (int j = 0; j < i; j++) {
-            sb.append("  ");
+        StringBuilder indentation = new StringBuilder();
+        for (int j = 0; j < depth; j++) {
+            indentation.append("  ");
         }
 
-        sb.append(n.getClassName());
-        sb.append(" ");
-        sb.append(n.getText());
-        sb.append(" ");
-        sb.append(n.getContentDescription());
-        sb.append(" ");
+        CharSequence nodeText = node.getText();
+        CharSequence nodeContentDescription = node.getContentDescription();
 
-        Log.d("nodeinfo", sb.toString());
+        String nodeDescription = node.getClassName() + " " +
+                (nodeText != null ? nodeText : "") + " " +
+                (nodeContentDescription != null ? nodeContentDescription : "");
 
-        for (int j = 0; j < n.getChildCount(); j++) {
-            handleNodeInfo(n.getChild(j), i + 1);
+        if ((isEmpty(nodeText) || isEmpty(nodeContentDescription)) && loggedNodes.add(nodeDescription)) {
+            Log.d("nodeinfo", indentation + nodeDescription);
         }
+
+        for (int i = 0; i < node.getChildCount(); i++) {
+            handleNodeInfo(node.getChild(i), depth + 1);
+        }
+    }
+
+    private boolean isEmpty(CharSequence str) {
+        return str != null && str.length() != 0;
     }
 
     private void logEvent(List<CharSequence> text, String action) {
@@ -103,9 +111,7 @@ public class MyAccessibilityService extends AccessibilityService {
 
             Log.d("Notification", "Notification Title: " + notificationTitle);
             Log.d("Notification", "Notification Text: " + notificationText);
-        }
-
-        else {
+        } else {
             List<CharSequence> notificationText = event.getText();
             if (!notificationText.isEmpty()) {
                 for (CharSequence t : notificationText) {
@@ -122,11 +128,9 @@ public class MyAccessibilityService extends AccessibilityService {
         Log.d("MyAccessibilityService", "Service interrupted");
     }
 
-
     @Override
     public void onServiceConnected() {
         super.onServiceConnected();
         Log.d("MyAccessibilityService", "Service connected");
     }
-
 }
