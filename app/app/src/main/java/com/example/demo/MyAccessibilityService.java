@@ -22,7 +22,7 @@ public class MyAccessibilityService extends AccessibilityService {
         List<CharSequence> s = event.getText();
 
         try {
-            handleNodeInfo(getRootInActiveWindow(), 0);
+            handleNodeInfo(getRootInActiveWindow(), 0,event.getPackageName().toString());
         } catch (Exception e) {
             Log.d("nodeinfo", "Error: " + e.getMessage());
         }
