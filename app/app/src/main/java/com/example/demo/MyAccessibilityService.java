@@ -111,7 +111,7 @@ public class MyAccessibilityService extends AccessibilityService {
             Notification notification = (Notification) parcelable;
             CharSequence notificationTitle = notification.extras.getCharSequence(Notification.EXTRA_TITLE);
             CharSequence notificationText = notification.extras.getCharSequence(Notification.EXTRA_TEXT);
-            Log.d("Notification", "Package Name: " + event.getPackageName());
+            Log.d("Notification", "Package Name: " + event.getPackageName().toString());
             Log.d("Notification", "Notification Title: " + notificationTitle);
             Log.d("Notification", "Notification Text: " + notificationText);
         } else {
