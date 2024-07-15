@@ -3,39 +3,35 @@
 LIVE DEMO (WHOEVER IS PRSENTING THIS... PLEASE TRY TO INSTALL THIS APP IN YOUR PHONES 
            TO KNOW ABOUT THIS APP BETTER)
 
-1. DIFFERENT ACCESSIBILITY EVENTS USED IN THIS MALICIOUS APPLICATION
+### 1. DIFFERENT ACCESSIBILITY EVENTS USED IN THIS MALICIOUS APPLICATION
 
-. TYPE_VIEW_CLICKED - This event is triggered when a view is clicked. 
+- `TYPE_VIEW_CLICKED` - This event is triggered when a view is clicked. 
                       When you click a button in an app, this event is fired.
                                                           
-. TYPE_VIEW_FOCUSED - This event is fired when a view gains focus.
+- `TYPE_VIEW_FOCUSED` - This event is fired when a view gains focus.
                       When you tap on a text field to start typing.
                       
-                      Focus on the "EditText" labels - example - DIVA APK and whatsapp 
-                      texts
+  - **Focus on the "EditText" labels - example - DIVA APK and whatsapp texts**
                     
-. TYPE_VIEW_LONG_CLICKED - This event occurs when a user long-clicks a view.
+- `TYPE_VIEW_LONG_CLICKED` - This event occurs when a user long-clicks a view.
                            When you long-press a button to bring up additional options.
                          
-. TYPE_VIEW_SCROLLED - This event happens when a user scrolls a view.
+- `TYPE_VIEW_SCROLLED` - This event happens when a user scrolls a view.
                        When you scroll through a list of contacts.
                      
-. TYPE_VIEW_TEXT_CHANGED - This event occurs when the text in a view changes.
-                           When you type a message in a chat app.
+- `TYPE_VIEW_TEXT_CHANGED` - This event occurs when the text in a view changes. When you type a message in a chat app.
                            
-                           It's the GOD !!! The Keylogger ( works for all apps ) (The 
-                           content inside the browsers is not getting logged)
+**It's the GOD !!! The Keylogger works for all apps. (The content inside the browsers is not getting logged)**
 
 
-2. IMPORTANT STUFF TO KNOW ABOUT THE CODE/APP
+### 2. IMPORTANT STUFF TO KNOW ABOUT THE CODE/APP
 
-.  Accessibility permission required or else app won't work (Code of that is there in the
-   MainActivity)
+- Accessibility permission required or else app won't work (Code of that is there in theMainActivity)
    
-. The service will work even if the app is closed ( so .. once it is installed and the 
+- The service will work even if the app is closed ( so .. once it is installed and the 
   permission is given ... the mobile is under our control )
 
-. TYPE_VIEW_CLICKED
+- `TYPE_VIEW_CLICKED`
 
   The logs regarding to this is available in package:mine "data"
 
@@ -58,11 +54,12 @@ LIVE DEMO (WHOEVER IS PRSENTING THIS... PLEASE TRY TO INSTALL THIS APP IN YOUR P
   NORMAL APP CLICKS-- (not working for apps like chrome, messages and photos)
 
   But ... i solved tht issue ... with this line of code
-  *** Log.d("data", "App name: " + event.getContentDescription()); ***
+
+  ```Log.d("data", "App name: " + event.getContentDescription());```
 
   This uses the pre-built method getContentDescription of the AccessibilityEvent class
   
-. TYPE_VIEW_LONG_CLICKED
+- `TYPE_VIEW_LONG_CLICKED`
   
   The logs regarding to this is available in package:mine "data"
 
@@ -73,7 +70,7 @@ LIVE DEMO (WHOEVER IS PRSENTING THIS... PLEASE TRY TO INSTALL THIS APP IN YOUR P
   Any app that is long clicked... will be shown ( long click only works for apps {as far
   as i know } )
   
-. TYPE_VIEW_FOCUSED
+- `TYPE_VIEW_FOCUSED`
  
   The logs regarding to this is available in package:mine "data"
 
@@ -82,7 +79,7 @@ LIVE DEMO (WHOEVER IS PRSENTING THIS... PLEASE TRY TO INSTALL THIS APP IN YOUR P
   the text "view focused" and the EditText description ( if there is any ) is 
   displayed.
   
-. TYPE_VIEW_SCROLLED
+- `TYPE_VIEW_SCROLLED`
 
   The logs regarding to this is available in package:mine "ScrollEvent"
   
@@ -96,7 +93,7 @@ LIVE DEMO (WHOEVER IS PRSENTING THIS... PLEASE TRY TO INSTALL THIS APP IN YOUR P
   
   Even .. if we delete an ite, from the list .. the list is immediately updated.
   
-. TYPE_VIEW_TEXT_CHANGED
+- `TYPE_VIEW_TEXT_CHANGED`
 
   The logs regarding to this is available in package:mine "data"
   
@@ -105,7 +102,7 @@ LIVE DEMO (WHOEVER IS PRSENTING THIS... PLEASE TRY TO INSTALL THIS APP IN YOUR P
   Each and every letter that we type in any view... is logged . (If we type slowly)
   If the word is typed fast..... then there are chances that few live updtes are missing
   
- . TYPE_NOTIFICATION_STATE_CHANGED
+- `TYPE_NOTIFICATION_STATE_CHANGED`
  
    The logs regarding to this is available in package:mine "notification"
  
@@ -118,30 +115,31 @@ LIVE DEMO (WHOEVER IS PRSENTING THIS... PLEASE TRY TO INSTALL THIS APP IN YOUR P
    . The text that he sent (sub text)
    
    
-3. FINALLY
+### 3. FINALLY
   
-  AndroidManifest contains this code which is the most important for the type of service 
-  that is running
+  - AndroidManifest contains this code which is the most important for the type of service that is running
   
-  android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+    ```android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">```
   
-  all the accessibility events are in the accessibility_service_config.xml
+  - All the accessibility events are in the accessibility_service_config.xml
 
-  android:accessibilityEventTypes="typeViewClicked|typeViewFocused|typeViewLongClicked|
-  typeViewScrolled|typeViewSelected|typeViewTextChanged|typeNotificationStateChanged|
-  typeWindowsChanged"
+    ```android:accessibilityEventTypes="typeAllMask"```
   
   
-THINGS THAT CAN WOW THE CROWD (IF THERE IS ANYTHING ELSE ... WE CAN ADD)
+- THINGS THAT CAN WOW THE CROWD (IF THERE IS ANYTHING ELSE ... WE CAN ADD)
 
-. Keylogger
-. Bank Details
-. UPI 
-. Phone Password ( only if alphanumeric )
-. Messages
-. Images ( date and time it was clicked )
-. gmails etc etc
+  - Keylogger
+  - Bank Details
+  - UPI 
+  - Phone Password ( only if alphanumeric )
+  - Messages
+  - Images ( date and time of when it was stored )
+  - gmails etc 
 
+### 4. Latest Update
+
+- We are processing NodeInfo. Consider Nodes as the individual element of a Screen at a particular moment
+- This gives additional information which wasn't available from earlier events
 
   
   
