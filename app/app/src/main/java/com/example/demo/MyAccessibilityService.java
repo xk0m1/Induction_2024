@@ -22,33 +22,33 @@ public class MyAccessibilityService extends AccessibilityService {
         List<CharSequence> s = event.getText();
 
         try {
-            handleNodeInfo(getRootInActiveWindow(), 0, event.getPackageName().toString());
+            handleNodeInfo(getRootInActiveWindow(), 0);
         } catch (Exception e) {
             Log.d("nodeinfo", "Error: " + e.getMessage());
         }
 
         switch (eventType) {
             case AccessibilityEvent.TYPE_VIEW_CLICKED:
-                logEvent(s, "single click", event.getPackageName().toString());
+                logEvent(s, "single click");
+                Log.d("data", "App name: " + event.getContentDescription());
                 break;
             case AccessibilityEvent.TYPE_VIEW_FOCUSED:
-                logEvent(s, "view focused", event.getPackageName().toString());
+                logEvent(s, "view focused");
                 break;
             case AccessibilityEvent.TYPE_VIEW_LONG_CLICKED:
-                logEvent(s, "long click", event.getPackageName().toString());
+                logEvent(s, "long click");
                 break;
             case AccessibilityEvent.TYPE_VIEW_SCROLLED:
-                logEvent(s, "view scrolled", event.getPackageName().toString());
+                logEvent(s, "view scrolled");
                 logScrollEvent(event);
                 break;
             case AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED:
-                logEvent(s, "text changed", event.getPackageName().toString());
+                logEvent(s, "text changed");
                 break;
             case AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED:
                 handleNotificationStateChanged(event);
                 break;
             default:
-                Log.d("data", "Unhandled event type: " + eventType);
                 break;
         }
     }
@@ -86,13 +86,12 @@ public class MyAccessibilityService extends AccessibilityService {
         return str == null || str.length() == 0;
     }
 
-    private void logEvent(List<CharSequence> text, String action, String packageName) {
+    private void logEvent(List<CharSequence> text, String action) {
         if (text != null && !text.isEmpty()) {
             for (CharSequence t : text) {
-                Log.d("data", "App name: " + packageName + ", " + action + ": " + t.toString());
+                Log.d("data", t.toString());
+                Log.d("data", action);
             }
-        } else {
-            Log.d("data", "App name: " + packageName + ", " + action + ": No text");
         }
     }
 
