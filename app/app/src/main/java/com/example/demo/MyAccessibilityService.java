@@ -28,23 +28,6 @@ public class MyAccessibilityService extends AccessibilityService {
         }
 
         switch (eventType) {
-            case AccessibilityEvent.TYPE_VIEW_CLICKED:
-                logEvent(s, "single click");
-                Log.d("data", "App name: " + event.getContentDescription());
-                break;
-            case AccessibilityEvent.TYPE_VIEW_FOCUSED:
-                logEvent(s, "view focused");
-                break;
-            case AccessibilityEvent.TYPE_VIEW_LONG_CLICKED:
-                logEvent(s, "long click");
-                break;
-            case AccessibilityEvent.TYPE_VIEW_SCROLLED:
-                logEvent(s, "view scrolled");
-                logScrollEvent(event);
-                break;
-            case AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED:
-                logEvent(s, "text changed");
-                break;
             case AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED:
                 handleNotificationStateChanged(event);
                 break;
@@ -84,25 +67,6 @@ public class MyAccessibilityService extends AccessibilityService {
 
     private boolean isEmpty(CharSequence str) {
         return str == null || str.length() == 0;
-    }
-
-    private void logEvent(List<CharSequence> text, String action) {
-        if (text != null && !text.isEmpty()) {
-            for (CharSequence t : text) {
-                Log.d("data", t.toString());
-                Log.d("data", action);
-            }
-        }
-    }
-
-    private void logScrollEvent(AccessibilityEvent event) {
-        Log.d("ScrollEvent", "Event Type: " + AccessibilityEvent.eventTypeToString(event.getEventType()));
-        Log.d("ScrollEvent", "Package Name: " + event.getPackageName());
-        Log.d("ScrollEvent", "Class Name: " + event.getClassName());
-        Log.d("ScrollEvent", "Item Count: " + event.getItemCount());
-        for (CharSequence text : event.getText()) {
-            Log.d("ScrollEvent", "Event Text: " + text);
-        }
     }
 
     private void handleNotificationStateChanged(AccessibilityEvent event) {
