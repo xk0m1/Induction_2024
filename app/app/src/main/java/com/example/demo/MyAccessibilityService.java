@@ -6,6 +6,7 @@ import android.os.Parcelable;
 import android.util.Log;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -21,28 +22,27 @@ public class MyAccessibilityService extends AccessibilityService {
         List<CharSequence> s = event.getText();
 
         try {
-            handleNodeInfo(getRootInActiveWindow(), 0);
+            handleNodeInfo(getRootInActiveWindow(), 0, event.getPackageName().toString());
         } catch (Exception e) {
             Log.d("nodeinfo", "Error: " + e.getMessage());
         }
 
         switch (eventType) {
             case AccessibilityEvent.TYPE_VIEW_CLICKED:
-                logEvent(s, "single click");
-                Log.d("data", "App name: " + event.getContentDescription());
+                logEvent(s, "single click", event.getPackageName().toString());
                 break;
             case AccessibilityEvent.TYPE_VIEW_FOCUSED:
-                logEvent(s, "view focused");
+                logEvent(s, "view focused", event.getPackageName().toString());
                 break;
             case AccessibilityEvent.TYPE_VIEW_LONG_CLICKED:
-                logEvent(s, "long click");
+                logEvent(s, "long click", event.getPackageName().toString());
                 break;
             case AccessibilityEvent.TYPE_VIEW_SCROLLED:
-                logEvent(s, "view scrolled");
+                logEvent(s, "view scrolled", event.getPackageName().toString());
                 logScrollEvent(event);
                 break;
             case AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED:
-                logEvent(s, "text changed");
+                logEvent(s, "text changed", event.getPackageName().toString());
                 break;
             case AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED:
                 handleNotificationStateChanged(event);
@@ -53,7 +53,7 @@ public class MyAccessibilityService extends AccessibilityService {
         }
     }
 
-    public void handleNodeInfo(AccessibilityNodeInfo node, int depth) {
+    public void handleNodeInfo(AccessibilityNodeInfo node, int depth, String packageName) {
         if (node == null) {
             return;
         }
@@ -66,29 +66,33 @@ public class MyAccessibilityService extends AccessibilityService {
         CharSequence nodeText = node.getText();
         CharSequence nodeContentDescription = node.getContentDescription();
 
-        String nodeDescription = node.getClassName() + " " +
+        String nodeDescription = packageName + " " + node.getClassName() + " " +
                 (nodeText != null ? nodeText : "") + " " +
                 (nodeContentDescription != null ? nodeContentDescription : "");
 
-        if ((isEmpty(nodeText) || isEmpty(nodeContentDescription)) && loggedNodes.add(nodeDescription)) {
-            Log.d("nodeinfo", indentation + nodeDescription);
+        if ((!isEmpty(nodeText) || !isEmpty(nodeContentDescription)) && loggedNodes.add(nodeDescription)) {
+            StringBuilder sb = new StringBuilder(indentation);
+            sb.append(nodeDescription);
+
+            Log.d("nodeinfo", sb.toString());
         }
 
         for (int i = 0; i < node.getChildCount(); i++) {
-            handleNodeInfo(node.getChild(i), depth + 1);
+            handleNodeInfo(node.getChild(i), depth + 1, packageName);
         }
     }
 
     private boolean isEmpty(CharSequence str) {
-        return str != null && str.length() != 0;
+        return str == null || str.length() == 0;
     }
 
-    private void logEvent(List<CharSequence> text, String action) {
+    private void logEvent(List<CharSequence> text, String action, String packageName) {
         if (text != null && !text.isEmpty()) {
             for (CharSequence t : text) {
-                Log.d("data", t.toString());
-                Log.d("data", action);
+                Log.d("data", "App name: " + packageName + ", " + action + ": " + t.toString());
             }
+        } else {
+            Log.d("data", "App name: " + packageName + ", " + action + ": No text");
         }
     }
 
