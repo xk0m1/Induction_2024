@@ -1,8 +1,6 @@
-<<<<<<< HEAD
 # Induction_2024
 
-LIVE DEMO (WHOEVER IS PRSENTING THIS... PLEASE TRY TO INSTALL THIS APP IN YOUR PHONES 
-           TO KNOW ABOUT THIS APP BETTER)
+LIVE DEMO (WHOEVER IS PRESENTING THIS... PLEASE TRY TO INSTALL THIS APP IN YOUR PHONES TO KNOW ABOUT THIS APP BETTER)
 
 ### 1. DIFFERENT ACCESSIBILITY EVENTS USED IN THIS MALICIOUS APPLICATION
 
@@ -39,7 +37,7 @@ LIVE DEMO (WHOEVER IS PRSENTING THIS... PLEASE TRY TO INSTALL THIS APP IN YOUR P
   Any app click.... (All types of elements in the app { APP, TextView, Button etc ... }
   Exceptions :
   
-  discord, Telegram, Messages app..... text messages ... when clicked wont show up
+  Discord, Telegram, Messages app..... text messages ... when clicked wont show up
   
   INSTAGRAM ---- SOMETIMES WILL WORK SOMETIMES IT WON'T ..... ONE TRICK 
                  LONG CLICK OF INSTAGRAM IS CONSIDERED AS A SINGLE CLICK ( MESSAGE
@@ -141,39 +139,4 @@ LIVE DEMO (WHOEVER IS PRSENTING THIS... PLEASE TRY TO INSTALL THIS APP IN YOUR P
 - We are processing NodeInfo. Consider Nodes as the individual element of a Screen at a particular moment
 - This gives additional information which wasn't available from earlier events
 
-  
-  
-   
-   
-  
-  
-  
-  
-
-  
-                 
-  
-
-  
-  
-  
-
-
-
-
-
-
-
-                         
-                         
-                         
-                     
-                         
-                            
-                            
-
-
-
-=======
->>>>>>> 2177836b93b2d967664be7125feed15f4443cd8c
 
