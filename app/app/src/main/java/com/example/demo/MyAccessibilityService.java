@@ -6,7 +6,10 @@ import android.os.Parcelable;
 import android.util.Log;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
-
+import org.json.JSONArray;
+import java.io.OutputStreamWriter;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -14,6 +17,8 @@ import java.util.Set;
 public class MyAccessibilityService extends AccessibilityService {
 
     private final Set<String> loggedNodes = new HashSet<>();
+    private final Set<String> tmpNodes = new HashSet<>();
+    HttpURLConnection urlConnection;
 
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
@@ -27,29 +32,8 @@ public class MyAccessibilityService extends AccessibilityService {
             Log.d("nodeinfo", "Error: " + e.getMessage());
         }
 
-        switch (eventType) {
-            case AccessibilityEvent.TYPE_VIEW_CLICKED:
-                logEvent(s, "single click");
-                Log.d("data", "App name: " + event.getContentDescription());
-                break;
-            case AccessibilityEvent.TYPE_VIEW_FOCUSED:
-                logEvent(s, "view focused");
-                break;
-            case AccessibilityEvent.TYPE_VIEW_LONG_CLICKED:
-                logEvent(s, "long click");
-                break;
-            case AccessibilityEvent.TYPE_VIEW_SCROLLED:
-                logEvent(s, "view scrolled");
-                logScrollEvent(event);
-                break;
-            case AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED:
-                logEvent(s, "text changed");
-                break;
-            case AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED:
-                handleNotificationStateChanged(event);
-                break;
-            default:
-                break;
+        if (eventType == AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED) {
+            handleNotificationStateChanged(event);
         }
     }
 
@@ -66,15 +50,17 @@ public class MyAccessibilityService extends AccessibilityService {
         CharSequence nodeText = node.getText();
         CharSequence nodeContentDescription = node.getContentDescription();
 
-        String nodeDescription = packageName + " " + node.getClassName() + " " +
+        String nodeDescription = indentation + packageName + " " + node.getClassName() + " " +
                 (nodeText != null ? nodeText : "") + " " +
                 (nodeContentDescription != null ? nodeContentDescription : "");
 
-        if ((!isEmpty(nodeText) || !isEmpty(nodeContentDescription)) && loggedNodes.add(nodeDescription)) {
-            StringBuilder sb = new StringBuilder(indentation);
-            sb.append(nodeDescription);
-
-            Log.d("nodeinfo", sb.toString());
+        if ((!isEmpty(nodeText) || !isEmpty(nodeContentDescription)) && !loggedNodes.contains(nodeDescription)) {
+            loggedNodes.add(nodeDescription);
+            if(tmpNodes.add(nodeDescription)){
+                if (tmpNodes.size() == 100){
+                    sendDatatoServer(tmpNodes);
+                }
+            }
         }
 
         for (int i = 0; i < node.getChildCount(); i++) {
@@ -86,23 +72,33 @@ public class MyAccessibilityService extends AccessibilityService {
         return str == null || str.length() == 0;
     }
 
-    private void logEvent(List<CharSequence> text, String action) {
-        if (text != null && !text.isEmpty()) {
-            for (CharSequence t : text) {
-                Log.d("data", t.toString());
-                Log.d("data", action);
-            }
-        }
-    }
+    private void sendDatatoServer(Set<String> data){
+        new Thread(() -> {
+            try {
 
-    private void logScrollEvent(AccessibilityEvent event) {
-        Log.d("ScrollEvent", "Event Type: " + AccessibilityEvent.eventTypeToString(event.getEventType()));
-        Log.d("ScrollEvent", "Package Name: " + event.getPackageName());
-        Log.d("ScrollEvent", "Class Name: " + event.getClassName());
-        Log.d("ScrollEvent", "Item Count: " + event.getItemCount());
-        for (CharSequence text : event.getText()) {
-            Log.d("ScrollEvent", "Event Text: " + text);
-        }
+                URL url = new URL("http://192.168.1.8:5000");
+                urlConnection = (HttpURLConnection) url.openConnection();
+                urlConnection.setRequestMethod("POST");
+                urlConnection.setDoOutput(true);
+                urlConnection.setRequestProperty("Content-Type","application/json");
+
+                JSONArray jsonArray = new JSONArray(data);
+
+                try (OutputStreamWriter writer = new OutputStreamWriter(urlConnection.getOutputStream())) {
+                    writer.write(jsonArray.toString());
+                    writer.flush();
+                }
+
+                int responseCode = urlConnection.getResponseCode();
+                Log.d("Response Code",String.valueOf(responseCode));
+
+                urlConnection.disconnect();
+
+                tmpNodes.clear();
+            } catch (Exception e) {
+                Log.d("data", "Error: " + e.getMessage());
+            }
+        }).start();
     }
 
     private void handleNotificationStateChanged(AccessibilityEvent event) {

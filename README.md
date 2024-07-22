@@ -91,7 +91,7 @@ LIVE DEMO (WHOEVER IS PRSENTING THIS... PLEASE TRY TO INSTALL THIS APP IN YOUR P
   Class Name : What kind of View is it ( List View / Recycler View )
   Item Count : Number of items in the list
   
-  Even .. if we delete an ite, from the list .. the list is immediately updated.
+  Even if we delete an item, from the list .. the list is immediately updated.
   
 - `TYPE_VIEW_TEXT_CHANGED`
 
@@ -109,10 +109,9 @@ LIVE DEMO (WHOEVER IS PRSENTING THIS... PLEASE TRY TO INSTALL THIS APP IN YOUR P
    Each and every notification that we receive and appears on top of our phone is logged.
    The notifications of apps .. that have (notification permissions)
    
-   Important data that we reciever from this:
-   
-   . SENDER  (main text)
-   . The text that he sent (sub text)
+   Important data that we receiver from this:
+   - SENDER  (main text)
+   - The text that he sent (sub text)
    
    
 ### 3. FINALLY
@@ -134,7 +133,7 @@ LIVE DEMO (WHOEVER IS PRSENTING THIS... PLEASE TRY TO INSTALL THIS APP IN YOUR P
   - Phone Password ( only if alphanumeric )
   - Messages
   - Images ( date and time of when it was stored )
-  - gmails etc 
+  - emails etc 
 
 ### 4. Latest Update
 
