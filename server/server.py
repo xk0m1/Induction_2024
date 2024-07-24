@@ -6,7 +6,6 @@ from threading import Lock
 
 app = Flask(__name__)
 
-# Set to keep track of processed logs
 processed_logs = set()
 data_lock = Lock()
 
@@ -18,21 +17,21 @@ def has_valid_timestamp(entry):
         return False
 
 def processData(data):
+    print(data)
     with data_lock:
-        # Ensure data is a list
         if not isinstance(data, list):
             ic("Invalid data format, expected a list")
             return
 
-        # Filter and sort data by the timestamp (last part of each string)
         valid_data = [entry for entry in data if has_valid_timestamp(entry)]
         sorted_data = sorted(valid_data, key=lambda x: int(x.split()[-1]))
 
         with open('node_data.txt', 'a') as f:
             for item in sorted_data:
-                if item not in processed_logs:
-                    f.write(item + '\n')
-                    processed_logs.add(item)
+                log_entry = ' '.join(item.split()[:-1])  
+                if log_entry not in processed_logs:
+                    f.write(log_entry + '\n')
+                    processed_logs.add(log_entry)
             f.write('=' * 50 + '\n')
 
 @app.route("/", methods=['POST'])
