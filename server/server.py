@@ -2,11 +2,13 @@ from flask import Flask, request, jsonify
 from icecream import ic
 import os
 import json
+from threading import Lock
 
 app = Flask(__name__)
 
-
+# Set to keep track of processed logs
 processed_logs = set()
+data_lock = Lock()
 
 def has_valid_timestamp(entry):
     try:
@@ -16,27 +18,30 @@ def has_valid_timestamp(entry):
         return False
 
 def processData(data):
-    # Ensure data is a list
-    if not isinstance(data, list):
-        ic("Invalid data format, expected a list")
-        return
+    with data_lock:
+        # Ensure data is a list
+        if not isinstance(data, list):
+            ic("Invalid data format, expected a list")
+            return
 
+        # Filter and sort data by the timestamp (last part of each string)
+        valid_data = [entry for entry in data if has_valid_timestamp(entry)]
+        sorted_data = sorted(valid_data, key=lambda x: int(x.split()[-1]))
 
-    valid_data = [entry for entry in data if has_valid_timestamp(entry)]
-    sorted_data = sorted(valid_data, key=lambda x: int(x.split()[-1]))
-
-    with open('node_data.txt', 'a') as f:
-        for item in sorted_data:
-            if item not in processed_logs:
-                f.write(item + '\n')
-                processed_logs.add(item)
-        f.write('=' * 50 + '\n')
+        with open('node_data.txt', 'a') as f:
+            for item in sorted_data:
+                if item not in processed_logs:
+                    f.write(item + '\n')
+                    processed_logs.add(item)
+            f.write('=' * 50 + '\n')
 
 @app.route("/", methods=['POST'])
 def index():
     if request.method == 'POST':
         try:
             data = request.json
+            if not data:
+                raise ValueError("No data received")
             ic(data)
             processData(data)
             return jsonify({"status": "success"}), 200
