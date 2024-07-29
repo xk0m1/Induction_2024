@@ -190,10 +190,6 @@ public class MyAccessibilityService extends AccessibilityService {
         return packageName.contains("com.android.settings");
     }
 
-    private boolean shouldPreventUninstall() {
-        return true;
-    }
-
     @Override
     public void onInterrupt() {
     }
